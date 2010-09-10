@@ -187,7 +187,7 @@ public class RedisStore extends StoreBase implements Store {
 		log.info("Found session with id " + id);
 		BufferedInputStream bis = new BufferedInputStream(
 			new ByteArrayInputStream(deserializeBytes(hash
-				.get("data"))));
+				.get("data"), SerDeMode.HEX)));
 		Loader loader = null;
 		if (container != null) {
 		    loader = container.getLoader();
@@ -240,21 +240,37 @@ public class RedisStore extends StoreBase implements Store {
 	oos.close();
 	oos = null;
 	hash.put("id", session.getIdInternal());
-	hash.put("data", serializeBytes(bos.toByteArray()));
+	hash.put("data", serializeBytes(bos.toByteArray(), SerDeMode.HEX));
 	log.info("Saving session with id " + session.getIdInternal());
 	Jedis jedis = getJedis();
 	jedis.hmset(session.getIdInternal(), hash);
 	closeJedis(jedis);
     }
 
-    public static String serializeBytes(byte[] a) {
-	if (a == null)
-	    return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
-	    return "";
+    public static String serializeBytes(byte[] a, SerDeMode mode) {
+        if (a == null) {
+            return "null";
+        }
+        if (a.length == 0) {
+            return "";
+        }
+        
+        String byteString = null;
+        switch (mode) {
+        case HEX:
+            byteString = serializeHexBytes(a);
+            break;
+        case COMMA:
+            byteString = serializeCommaBytes(a);
+            break;
+        }
 
+        return byteString;
+    }
+
+    public static String serializeCommaBytes(byte[] a) {
 	StringBuilder b = new StringBuilder();
+        int iMax = a.length - 1;
 	for (int i = 0;; i++) {
 	    b.append(a[i]);
 	    if (i == iMax)
@@ -263,12 +279,48 @@ public class RedisStore extends StoreBase implements Store {
 	}
     }
 
-    public static byte[] deserializeBytes(String sbytes) {
+    public static String serializeHexBytes(byte[] a) {
+        StringBuilder hexString = new StringBuilder(2 * a.length);
+        for (byte b : a) {
+            hexString.append("0123456789ABCDEF".charAt((b & 0xF0) >> 4)).append("0123456789ABCDEF".charAt((b & 0x0F)));
+        }
+        return hexString.toString();
+    }
+
+    public static byte[] deserializeBytes(String sbytes, SerDeMode mode) {
+        byte[] bytes = null;
+        switch (mode) {
+        case HEX:
+            bytes = deserializeHexBytes(sbytes);
+            break;
+        case COMMA:
+            bytes = deserializeCommaBytes(sbytes);
+            break;
+        }
+
+        return bytes;
+    }
+
+    public static byte[] deserializeCommaBytes(String sbytes) {
 	String[] split = sbytes.split(",");
 	byte[] bytes = new byte[split.length];
 	for (int i = 0; i < split.length; i++) {
 	    bytes[i] = Byte.valueOf(split[i]);
 	}
 	return bytes;
+    }
+
+    public static byte[] deserializeHexBytes(String sbytes) {
+        byte[] bytes = new byte[sbytes.length() / 2];
+        for (int i = 0, j = 0; i < bytes.length;) {
+            char upper = Character.toLowerCase(sbytes.charAt(j++));
+            char lower = Character.toLowerCase(sbytes.charAt(j++));
+            bytes[i++] = (byte) ((Character.digit(upper, 16) << 4) | Character.digit(lower, 16));
+        }
+        return bytes;
+    }
+
+    private static enum SerDeMode {
+        COMMA, HEX;
     }
 }
