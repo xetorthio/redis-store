@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,8 +120,6 @@ public class RedisStore extends StoreBase implements Store {
     }
 
     private Jedis getJedis() throws IOException {
-	log.info("Connecting to redis " + getHost() + ":" + getPort()
-		+ " - db " + getDatabase());
 	Jedis jedis = new Jedis(getHost(), getPort());
 	try {
 	    jedis.connect();
@@ -138,7 +135,6 @@ public class RedisStore extends StoreBase implements Store {
     }
 
     private void closeJedis(Jedis jedis) throws IOException {
-	log.info("Closing connection to redis.");
 	jedis.quit();
 	try {
 	    jedis.disconnect();
@@ -149,7 +145,6 @@ public class RedisStore extends StoreBase implements Store {
     }
 
     public void clear() throws IOException {
-	log.info("Clearing sessions.");
 	Jedis jedis = getJedis();
 	jedis.flushDB();
 	closeJedis(jedis);
@@ -157,7 +152,6 @@ public class RedisStore extends StoreBase implements Store {
 
     public int getSize() throws IOException {
 	int size = 0;
-	log.info("Getting size.");
 	Jedis jedis = getJedis();
 	size = jedis.dbSize();
 	closeJedis(jedis);
@@ -166,7 +160,6 @@ public class RedisStore extends StoreBase implements Store {
 
     public String[] keys() throws IOException {
 	String keys[] = null;
-	log.info("Getting keys.");
 	Jedis jedis = getJedis();
 	List<String> keysList = jedis.keys("*");
 	closeJedis(jedis);
@@ -177,17 +170,15 @@ public class RedisStore extends StoreBase implements Store {
     public Session load(String id) throws ClassNotFoundException, IOException {
 	StandardSession session = null;
 	ObjectInputStream ois;
-	log.info("Loading session with id " + id);
 	Container container = manager.getContainer();
 	Jedis jedis = getJedis();
 	Map<String, String> hash = jedis.hgetAll(id);
 	closeJedis(jedis);
 	if (!hash.isEmpty()) {
 	    try {
-		log.info("Found session with id " + id);
 		BufferedInputStream bis = new BufferedInputStream(
 			new ByteArrayInputStream(deserializeBytes(hash
-				.get("data"), SerDeMode.HEX)));
+				.get("data"))));
 		Loader loader = null;
 		if (container != null) {
 		    loader = container.getLoader();
@@ -204,25 +195,16 @@ public class RedisStore extends StoreBase implements Store {
 		session = (StandardSession) manager.createEmptySession();
 		session.readObjectData(ois);
 		session.setManager(manager);
-		log.info("Generated session " + session);
-		Enumeration<String> attributeNames = session
-			.getAttributeNames();
-		while (attributeNames.hasMoreElements()) {
-		    String attr = attributeNames.nextElement();
-		    log.info("Attribute " + attr + " with value "
-			    + session.getAttribute(attr));
-		}
 	    } catch (Exception ex) {
-		log.info(ex.getMessage());
+		log.severe(ex.getMessage());
 	    }
 	} else {
-	    log.info("No persisted data object found");
+	    log.warning("No persisted data object found");
 	}
 	return session;
     }
 
     public void remove(String id) throws IOException {
-	log.info("Removing session with id " + id);
 	Jedis jedis = getJedis();
 	jedis.del(id);
 	closeJedis(jedis);
@@ -240,87 +222,49 @@ public class RedisStore extends StoreBase implements Store {
 	oos.close();
 	oos = null;
 	hash.put("id", session.getIdInternal());
-	hash.put("data", serializeBytes(bos.toByteArray(), SerDeMode.HEX));
-	log.info("Saving session with id " + session.getIdInternal());
+	hash.put("data", serializeBytes(bos.toByteArray()));
 	Jedis jedis = getJedis();
 	jedis.hmset(session.getIdInternal(), hash);
 	closeJedis(jedis);
     }
 
-    public static String serializeBytes(byte[] a, SerDeMode mode) {
-        if (a == null) {
-            return "null";
-        }
-        if (a.length == 0) {
-            return "";
-        }
-        
-        String byteString = null;
-        switch (mode) {
-        case HEX:
-            byteString = serializeHexBytes(a);
-            break;
-        case COMMA:
-            byteString = serializeCommaBytes(a);
-            break;
-        }
-
-        return byteString;
-    }
-
-    public static String serializeCommaBytes(byte[] a) {
-	StringBuilder b = new StringBuilder();
-        int iMax = a.length - 1;
-	for (int i = 0;; i++) {
-	    b.append(a[i]);
-	    if (i == iMax)
-		return b.toString();
-	    b.append(",");
+    public static String serializeBytes(byte[] a) {
+	if (a == null) {
+	    return "null";
 	}
-    }
-
-    public static String serializeHexBytes(byte[] a) {
-        StringBuilder hexString = new StringBuilder(2 * a.length);
-        for (byte b : a) {
-            hexString.append("0123456789ABCDEF".charAt((b & 0xF0) >> 4)).append("0123456789ABCDEF".charAt((b & 0x0F)));
-        }
-        return hexString.toString();
-    }
-
-    public static byte[] deserializeBytes(String sbytes, SerDeMode mode) {
-        byte[] bytes = null;
-        switch (mode) {
-        case HEX:
-            bytes = deserializeHexBytes(sbytes);
-            break;
-        case COMMA:
-            bytes = deserializeCommaBytes(sbytes);
-            break;
-        }
-
-        return bytes;
-    }
-
-    public static byte[] deserializeCommaBytes(String sbytes) {
-	String[] split = sbytes.split(",");
-	byte[] bytes = new byte[split.length];
-	for (int i = 0; i < split.length; i++) {
-	    bytes[i] = Byte.valueOf(split[i]);
+	if (a.length == 0) {
+	    return "";
 	}
+
+	String byteString = null;
+	byteString = serializeHexBytes(a);
+
+	return byteString;
+    }
+
+    public static byte[] deserializeBytes(String sbytes) {
+	byte[] bytes = null;
+	bytes = deserializeHexBytes(sbytes);
 	return bytes;
     }
 
-    public static byte[] deserializeHexBytes(String sbytes) {
-        byte[] bytes = new byte[sbytes.length() / 2];
-        for (int i = 0, j = 0; i < bytes.length;) {
-            char upper = Character.toLowerCase(sbytes.charAt(j++));
-            char lower = Character.toLowerCase(sbytes.charAt(j++));
-            bytes[i++] = (byte) ((Character.digit(upper, 16) << 4) | Character.digit(lower, 16));
-        }
-        return bytes;
+    private static String serializeHexBytes(byte[] a) {
+	StringBuilder hexString = new StringBuilder(2 * a.length);
+	for (byte b : a) {
+	    hexString.append("0123456789ABCDEF".charAt((b & 0xF0) >> 4))
+		    .append("0123456789ABCDEF".charAt((b & 0x0F)));
+	}
+	return hexString.toString();
     }
 
-    private static enum SerDeMode {
-        COMMA, HEX;
+    private static byte[] deserializeHexBytes(String sbytes) {
+	byte[] bytes = new byte[sbytes.length() / 2];
+	for (int i = 0, j = 0; i < bytes.length;) {
+	    char upper = Character.toLowerCase(sbytes.charAt(j++));
+	    char lower = Character.toLowerCase(sbytes.charAt(j++));
+	    bytes[i++] = (byte) ((Character.digit(upper, 16) << 4) | Character
+		    .digit(lower, 16));
+	}
+	return bytes;
     }
 }

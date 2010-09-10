@@ -73,4 +73,13 @@ public class RedisStoreTest extends Assert {
 	assertEquals("bar", ((StandardSession) loadedSession)
 		.getAttribute("foo"));
     }
+
+    @Test
+    public void checkSerialization() {
+	byte[] data = new byte[] { -2, -127 };
+	String serializedData = RedisStore.serializeBytes(data);
+	byte[] deserializedData = RedisStore.deserializeBytes(serializedData);
+
+	assertArrayEquals(data, deserializedData);
+    }
 }
