@@ -20,6 +20,8 @@ You must copy the jar into the lib folder of your tomcat installation directory,
 	
 You can play with the values. This is just an example.
 
+Make sure that whatever you store in the session is Serializable.
+
 License
 -------
 
