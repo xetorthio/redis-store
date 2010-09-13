@@ -195,6 +195,7 @@ public class RedisStore extends StoreBase implements Store {
 		session = (StandardSession) manager.createEmptySession();
 		session.readObjectData(ois);
 		session.setManager(manager);
+		log.info("Loaded session id " + id);
 	    } catch (Exception ex) {
 		log.severe(ex.getMessage());
 	    }
@@ -208,6 +209,7 @@ public class RedisStore extends StoreBase implements Store {
 	Jedis jedis = getJedis();
 	jedis.del(id);
 	closeJedis(jedis);
+	log.info("Removed session id " + id);
     }
 
     public void save(Session session) throws IOException {
@@ -226,6 +228,7 @@ public class RedisStore extends StoreBase implements Store {
 	Jedis jedis = getJedis();
 	jedis.hmset(session.getIdInternal(), hash);
 	closeJedis(jedis);
+	log.info("Saved session with id " + session.getIdInternal());
     }
 
     public static String serializeBytes(byte[] a) {
