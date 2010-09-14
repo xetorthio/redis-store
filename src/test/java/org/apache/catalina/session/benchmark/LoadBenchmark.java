@@ -7,11 +7,12 @@ import org.apache.catalina.Session;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.session.PersistentManager;
 import org.apache.catalina.session.RedisStore;
+import org.apache.catalina.session.StandardSession;
 
 import redis.clients.jedis.Protocol;
 
 public class LoadBenchmark {
-    private static final int TOTAL_OPERATIONS = 10000;
+    private static final int TOTAL_OPERATIONS = 1000;
 
     /**
      * @param args
@@ -31,6 +32,8 @@ public class LoadBenchmark {
 	rs.setManager(manager);
 
 	Session session = manager.createSession(null);
+	((StandardSession) session).setAttribute("info", new String(
+		new byte[30000]));
 	rs.save(session);
 
 	String id = session.getId();
@@ -41,7 +44,8 @@ public class LoadBenchmark {
 	}
 	long ellapsed = Calendar.getInstance().getTimeInMillis() - begin;
 
-	System.out.println((1000 * TOTAL_OPERATIONS / ellapsed) + " loads / second");
+	System.out.println((1000 * TOTAL_OPERATIONS / ellapsed)
+		+ " loads / second");
     }
 
 }

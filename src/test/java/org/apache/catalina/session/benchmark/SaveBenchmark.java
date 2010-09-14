@@ -7,17 +7,19 @@ import org.apache.catalina.Session;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.session.PersistentManager;
 import org.apache.catalina.session.RedisStore;
+import org.apache.catalina.session.StandardSession;
 
 import redis.clients.jedis.Protocol;
 
 public class SaveBenchmark {
-    private static final int TOTAL_OPERATIONS = 10000;
+    private static final int TOTAL_OPERATIONS = 1000;
 
     /**
      * @param args
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
+	String info = new String(new byte[30000]);
 	RedisStore.setDatabase(0);
 	RedisStore.setHost("localhost");
 	RedisStore.setPassword("foobared");
@@ -31,6 +33,7 @@ public class SaveBenchmark {
 	long begin = Calendar.getInstance().getTimeInMillis();
 	for (int n = 0; n < TOTAL_OPERATIONS; n++) {
 	    Session session = manager.createSession(null);
+	    ((StandardSession) session).setAttribute("info", info);
 	    rs.save(session);
 	}
 	long ellapsed = Calendar.getInstance().getTimeInMillis() - begin;
