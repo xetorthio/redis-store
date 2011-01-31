@@ -2,6 +2,8 @@ package org.apache.catalina.session.benchmark;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.catalina.Session;
 import org.apache.catalina.core.StandardContext;
@@ -20,32 +22,33 @@ public class LoadBenchmark {
      * @throws ClassNotFoundException
      */
     public static void main(String[] args) throws IOException,
-	    ClassNotFoundException {
-	RedisStore.setDatabase(0);
-	RedisStore.setHost("localhost");
-	RedisStore.setPassword("foobared");
-	RedisStore.setPort(Protocol.DEFAULT_PORT);
+            ClassNotFoundException {
+        Logger.getLogger("RedisStore").setLevel(Level.OFF);
+        RedisStore.setDatabase(0);
+        RedisStore.setHost("localhost");
+        RedisStore.setPassword("foobared");
+        RedisStore.setPort(Protocol.DEFAULT_PORT);
 
-	PersistentManager manager = new PersistentManager();
-	manager.setContainer(new StandardContext());
-	RedisStore rs = new RedisStore();
-	rs.setManager(manager);
+        PersistentManager manager = new PersistentManager();
+        manager.setContainer(new StandardContext());
+        RedisStore rs = new RedisStore();
+        rs.setManager(manager);
 
-	Session session = manager.createSession(null);
-	((StandardSession) session).setAttribute("info", new String(
-		new byte[30000]));
-	rs.save(session);
+        Session session = manager.createSession(null);
+        ((StandardSession) session).setAttribute("info", new String(
+                new byte[30000]));
+        rs.save(session);
 
-	String id = session.getId();
+        String id = session.getId();
 
-	long begin = Calendar.getInstance().getTimeInMillis();
-	for (int n = 0; n < TOTAL_OPERATIONS; n++) {
-	    rs.load(id);
-	}
-	long ellapsed = Calendar.getInstance().getTimeInMillis() - begin;
+        long begin = Calendar.getInstance().getTimeInMillis();
+        for (int n = 0; n < TOTAL_OPERATIONS; n++) {
+            rs.load(id);
+        }
+        long ellapsed = Calendar.getInstance().getTimeInMillis() - begin;
 
-	System.out.println((1000 * TOTAL_OPERATIONS / ellapsed)
-		+ " loads / second");
+        System.out.println((1000 * TOTAL_OPERATIONS / ellapsed)
+                + " loads / second");
     }
 
 }

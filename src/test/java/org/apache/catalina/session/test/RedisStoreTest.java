@@ -24,62 +24,53 @@ public class RedisStoreTest extends Assert {
 
     @Before
     public void startUp() {
-	RedisStore.setDatabase(0);
-	RedisStore.setHost("localhost");
-	RedisStore.setPassword("foobared");
-	RedisStore.setPort(Protocol.DEFAULT_PORT);
+        RedisStore.setDatabase(0);
+        RedisStore.setHost("localhost");
+        RedisStore.setPassword("foobared");
+        RedisStore.setPort(Protocol.DEFAULT_PORT);
 
-	manager = new PersistentManager();
-	manager.setContainer(new StandardContext());
-	rs = new RedisStore();
-	rs.setManager(manager);
+        manager = new PersistentManager();
+        manager.setContainer(new StandardContext());
+        rs = new RedisStore();
+        rs.setManager(manager);
     }
 
     @Test
     public void save() throws IOException, ClassNotFoundException {
-	Session session = manager.createSession(null);
-	rs.save(session);
+        Session session = manager.createSession(null);
+        rs.save(session);
 
-	Jedis j = new Jedis("localhost");
-	j.connect();
-	j.auth("foobared");
-	Map<String, String> data = j.hgetAll(session.getId());
-	j.quit();
-	j.disconnect();
+        Jedis j = new Jedis("localhost");
+        j.connect();
+        j.auth("foobared");
+        Map<String, String> data = j.hgetAll(session.getId());
+        j.quit();
+        j.disconnect();
 
-	assertNotNull(data);
-	ObjectOutputStream oos = null;
-	ByteArrayOutputStream bos = null;
+        assertNotNull(data);
+        ObjectOutputStream oos = null;
+        ByteArrayOutputStream bos = null;
 
-	bos = new ByteArrayOutputStream();
-	oos = new ObjectOutputStream(new BufferedOutputStream(bos));
+        bos = new ByteArrayOutputStream();
+        oos = new ObjectOutputStream(new BufferedOutputStream(bos));
 
-	((StandardSession) session).writeObjectData(oos);
-	oos.close();
-	oos = null;
-	assertEquals(session.getId(), data.get("id"));
+        ((StandardSession) session).writeObjectData(oos);
+        oos.close();
+        oos = null;
+        assertEquals(session.getId(), data.get("id"));
     }
 
     @Test
     public void load() throws IOException, ClassNotFoundException {
-	Session savedSession = manager.createSession(null);
-	((StandardSession) savedSession).setAttribute("foo", "bar");
-	rs.save(savedSession);
+        Session savedSession = manager.createSession(null);
+        ((StandardSession) savedSession).setAttribute("foo", "bar");
+        rs.save(savedSession);
 
-	Session loadedSession = rs.load(savedSession.getId());
+        Session loadedSession = rs.load(savedSession.getId());
 
-	assertNotNull(loadedSession);
-	assertEquals(savedSession.getId(), loadedSession.getId());
-	assertEquals("bar", ((StandardSession) loadedSession)
-		.getAttribute("foo"));
-    }
-
-    @Test
-    public void checkSerialization() {
-	byte[] data = new byte[] { -2, -127 };
-	String serializedData = RedisStore.serializeBytes(data);
-	byte[] deserializedData = RedisStore.deserializeBytes(serializedData);
-
-	assertArrayEquals(data, deserializedData);
+        assertNotNull(loadedSession);
+        assertEquals(savedSession.getId(), loadedSession.getId());
+        assertEquals("bar", ((StandardSession) loadedSession)
+                .getAttribute("foo"));
     }
 }
