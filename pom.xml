@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.apache.catalina.session</groupId>
 	<artifactId>RedisStore</artifactId>
-	<version>1.0.0-RC2</version>
+	<version>1.0.0-RC3</version>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
