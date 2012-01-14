@@ -25,7 +25,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 public class RedisStore extends StoreBase implements Store {
-    private static final int DEFAULT_DATABASE = -1;
+    private static final int DEFAULT_DATABASE = 0;
     private static final byte[] DATA_FIELD = "data".getBytes();
     private static final byte[] ID_FIELD = "id".getBytes();
     private static Logger log = Logger.getLogger("RedisStore");
@@ -49,7 +49,7 @@ public class RedisStore extends StoreBase implements Store {
     /**
      * Redis database
      */
-    protected static int database = -1;
+    protected static int database = DEFAULT_DATABASE;
 
     protected static boolean usePool = false;
     //Jedis Pool Settings
