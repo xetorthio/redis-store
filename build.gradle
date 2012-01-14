@@ -23,8 +23,8 @@ dependencies {
   compile "org.apache.tomcat:tomcat-catalina:${tomcatVersion}"
   compile 'redis.clients:jedis:2.0.0'
   compile "org.apache.tomcat:tomcat-util:${tomcatVersion}"
+  compile "org.apache.tomcat:tomcat-coyote:${tomcatVersion}"
+
 
   testCompile 'junit:junit:4.10'
-  testCompile 'org.jmock:jmock-junit4:2.5.1'
-
 }
