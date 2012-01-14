@@ -1,7 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'idea'
-apply plugin: 'maven'
-apply plugin: 'code-quality'
+apply plugin: 'eclipse'
 apply plugin: 'project-report'
 
 sourceCompatibility = '1.6'
@@ -24,7 +23,6 @@ dependencies {
   compile 'redis.clients:jedis:2.0.0'
   compile "org.apache.tomcat:tomcat-util:${tomcatVersion}"
   compile "org.apache.tomcat:tomcat-coyote:${tomcatVersion}"
-
 
   testCompile 'junit:junit:4.10'
 }
