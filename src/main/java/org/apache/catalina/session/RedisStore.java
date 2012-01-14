@@ -20,12 +20,17 @@ import org.apache.catalina.Session;
 import org.apache.catalina.Store;
 import org.apache.catalina.util.CustomObjectInputStream;
 
+import org.apache.commons.pool.impl.GenericObjectPool;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 
 public class RedisStore extends StoreBase implements Store {
+    private static final int DEFAULT_DATABASE = -1;
     private static final byte[] DATA_FIELD = "data".getBytes();
     private static final byte[] ID_FIELD = "id".getBytes();
     private static Logger log = Logger.getLogger("RedisStore");
+    
+    private JedisPool jedisPool;
     /**
      * Redis Host
      */
@@ -44,7 +49,126 @@ public class RedisStore extends StoreBase implements Store {
     /**
      * Redis database
      */
-    protected static int database = 0;
+    protected static int database = -1;
+
+    protected static boolean usePool = false;
+    //Jedis Pool Settings
+    protected static int maxIdle = GenericObjectPool.DEFAULT_MAX_IDLE;
+    protected static int minIdle = GenericObjectPool.DEFAULT_MIN_IDLE;
+    protected static int maxActive = GenericObjectPool.DEFAULT_MAX_ACTIVE;
+    protected static long maxWait = GenericObjectPool.DEFAULT_MAX_WAIT;
+    protected static byte whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_BLOCK;
+    protected static boolean testOnBorrow = GenericObjectPool.DEFAULT_TEST_ON_BORROW;
+    protected static boolean testOnReturn = GenericObjectPool.DEFAULT_TEST_ON_RETURN;
+    protected static boolean testWhileIdle = GenericObjectPool.DEFAULT_TEST_WHILE_IDLE;
+    protected static long timeBetweenEvictionRunsMillis = GenericObjectPool.DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS;
+    protected static int numTestsPerEvictionRun = GenericObjectPool.DEFAULT_NUM_TESTS_PER_EVICTION_RUN;
+    protected static long minEvictableIdleTimeMillis = GenericObjectPool.DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
+    protected static long softMinEvictableIdleTimeMillis = GenericObjectPool.DEFAULT_SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
+
+    public static boolean isUsePool() {
+        return usePool;
+    }
+
+    public static void setUsePool(boolean usePool) {
+        RedisStore.usePool = usePool;
+    }
+
+    public static int getMaxIdle() {
+        return maxIdle;
+    }
+
+    public static void setMaxIdle(int maxIdle) {
+        RedisStore.maxIdle = maxIdle;
+    }
+
+    public static int getMinIdle() {
+        return minIdle;
+    }
+
+    public static void setMinIdle(int minIdle) {
+        RedisStore.minIdle = minIdle;
+    }
+
+    public static int getMaxActive() {
+        return maxActive;
+    }
+
+    public static void setMaxActive(int maxActive) {
+        RedisStore.maxActive = maxActive;
+    }
+
+    public static long getMaxWait() {
+        return maxWait;
+    }
+
+    public static void setMaxWait(long maxWait) {
+        RedisStore.maxWait = maxWait;
+    }
+
+    public static byte getWhenExhaustedAction() {
+        return whenExhaustedAction;
+    }
+
+    public static void setWhenExhaustedAction(byte whenExhaustedAction) {
+        RedisStore.whenExhaustedAction = whenExhaustedAction;
+    }
+
+    public static boolean isTestOnBorrow() {
+        return testOnBorrow;
+    }
+
+    public static void setTestOnBorrow(boolean testOnBorrow) {
+        RedisStore.testOnBorrow = testOnBorrow;
+    }
+
+    public static boolean isTestOnReturn() {
+        return testOnReturn;
+    }
+
+    public static void setTestOnReturn(boolean testOnReturn) {
+        RedisStore.testOnReturn = testOnReturn;
+    }
+
+    public static boolean isTestWhileIdle() {
+        return testWhileIdle;
+    }
+
+    public static void setTestWhileIdle(boolean testWhileIdle) {
+        RedisStore.testWhileIdle = testWhileIdle;
+    }
+
+    public static long getTimeBetweenEvictionRunsMillis() {
+        return timeBetweenEvictionRunsMillis;
+    }
+
+    public static void setTimeBetweenEvictionRunsMillis(long timeBetweenEvictionRunsMillis) {
+        RedisStore.timeBetweenEvictionRunsMillis = timeBetweenEvictionRunsMillis;
+    }
+
+    public static int getNumTestsPerEvictionRun() {
+        return numTestsPerEvictionRun;
+    }
+
+    public static void setNumTestsPerEvictionRun(int numTestsPerEvictionRun) {
+        RedisStore.numTestsPerEvictionRun = numTestsPerEvictionRun;
+    }
+
+    public static long getMinEvictableIdleTimeMillis() {
+        return minEvictableIdleTimeMillis;
+    }
+
+    public static void setMinEvictableIdleTimeMillis(long minEvictableIdleTimeMillis) {
+        RedisStore.minEvictableIdleTimeMillis = minEvictableIdleTimeMillis;
+    }
+
+    public static long getSoftMinEvictableIdleTimeMillis() {
+        return softMinEvictableIdleTimeMillis;
+    }
+
+    public static void setSoftMinEvictableIdleTimeMillis(long softMinEvictableIdleTimeMillis) {
+        RedisStore.softMinEvictableIdleTimeMillis = softMinEvictableIdleTimeMillis;
+    }
 
     /**
      * Get the redis host
@@ -123,15 +247,50 @@ public class RedisStore extends StoreBase implements Store {
     }
 
     private Jedis getJedis() throws IOException {
-        Jedis jedis = new Jedis(getHost(), getPort());
-        jedis.connect();
-        jedis.select(getDatabase());
+        Jedis jedis = null;
+        if(usePool) {
+            if(jedisPool == null) {
+                GenericObjectPool.Config config =  new GenericObjectPool.Config();
+                config.maxActive = RedisStore.maxActive;
+                config.maxIdle = RedisStore.maxIdle;
+                config.maxWait = RedisStore.maxWait;
+                config.minEvictableIdleTimeMillis = RedisStore.minEvictableIdleTimeMillis;
+                config.minIdle = RedisStore.minIdle;
+                config.numTestsPerEvictionRun = RedisStore.numTestsPerEvictionRun;
+                config.softMinEvictableIdleTimeMillis = RedisStore.softMinEvictableIdleTimeMillis;
+                config.testOnBorrow = RedisStore.testOnBorrow;
+                config.testOnReturn = RedisStore.testOnReturn;
+                config.testWhileIdle = RedisStore.testWhileIdle;
+                config.timeBetweenEvictionRunsMillis = RedisStore.timeBetweenEvictionRunsMillis;
+                
+                if(RedisStore.password != null) {
+                    jedisPool = new JedisPool(config, RedisStore.host, RedisStore.port, -1, RedisStore.password);
+                } else {
+                    jedisPool = new JedisPool(config, RedisStore.host, RedisStore.port);
+                }
+            }
+            jedis = jedisPool.getResource();
+
+        } else {
+            jedis = new Jedis(getHost(), getPort());
+            jedis.connect();
+        }
+        if(RedisStore.getDatabase() != DEFAULT_DATABASE) {
+            jedis.select(getDatabase());
+        }
+
+        
         return jedis;
     }
 
     private void closeJedis(Jedis jedis) throws IOException {
-        jedis.quit();
-        jedis.disconnect();
+        if(usePool) {
+            jedisPool.returnResource(jedis);
+        } else {
+            jedis.quit();
+            jedis.disconnect();
+        }
+
     }
 
     public void clear() throws IOException {

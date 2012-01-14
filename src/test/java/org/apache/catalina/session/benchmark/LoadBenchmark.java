@@ -15,7 +15,7 @@ import org.apache.catalina.util.SessionIdGenerator;
 import redis.clients.jedis.Protocol;
 
 public class LoadBenchmark {
-    private static final int TOTAL_OPERATIONS = 10000;
+    private static  int TOTAL_OPERATIONS = 100000;
 
     /**
      * @param args
@@ -26,10 +26,12 @@ public class LoadBenchmark {
             ClassNotFoundException {
         SessionIdGenerator sessionIdGenerator = new SessionIdGenerator();
         Logger.getLogger("RedisStore").setLevel(Level.OFF);
-        RedisStore.setDatabase(0);
         RedisStore.setHost("localhost");
         //RedisStore.setPassword("foobared");
         RedisStore.setPort(Protocol.DEFAULT_PORT);
+        RedisStore.setUsePool(true);
+        RedisStore.setMinIdle(20);
+        RedisStore.setMaxActive(20);
 
         PersistentManager manager = new PersistentManager();
         manager.setContainer(new StandardContext());
@@ -48,7 +50,7 @@ public class LoadBenchmark {
             try {
                 rs.load(id);
             } catch(RuntimeException re) {
-                System.out.println("Operation: " + n);
+                System.out.println("Broken in Operation: " + n);
                 throw re;
             }
         }
