@@ -124,27 +124,14 @@ public class RedisStore extends StoreBase implements Store {
 
     private Jedis getJedis() throws IOException {
         Jedis jedis = new Jedis(getHost(), getPort());
-        try {
-            jedis.connect();
-            jedis.select(getDatabase());
-            return jedis;
-        } catch (UnknownHostException e) {
-            log.severe("Unknown redis host");
-            throw e;
-        } catch (IOException e) {
-            log.severe("Unknown redis port");
-            throw e;
-        }
+        jedis.connect();
+        jedis.select(getDatabase());
+        return jedis;
     }
 
     private void closeJedis(Jedis jedis) throws IOException {
         jedis.quit();
-        try {
-            jedis.disconnect();
-        } catch (IOException e) {
-            log.severe(e.getMessage());
-            throw e;
-        }
+        jedis.disconnect();
     }
 
     public void clear() throws IOException {
