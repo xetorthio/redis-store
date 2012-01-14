@@ -6,3 +6,6 @@ target/
 .idea
 build
 *.iml
+*.ipr
+*.iws
+out/
