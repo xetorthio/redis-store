@@ -15,7 +15,7 @@ import org.apache.catalina.util.SessionIdGenerator;
 import redis.clients.jedis.Protocol;
 
 public class LoadBenchmark {
-    private static  int TOTAL_OPERATIONS = 100000;
+    private static  int TOTAL_OPERATIONS = 1000;
 
     /**
      * @param args

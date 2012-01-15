@@ -26,9 +26,7 @@ public class RedisStoreTest extends Assert {
 
     @Before
     public void startUp() {
-        RedisStore.setDatabase(0);
         RedisStore.setHost("localhost");
-        //RedisStore.setPassword("foobared");
         RedisStore.setPort(Protocol.DEFAULT_PORT);
 
         manager = new PersistentManager();
@@ -41,17 +39,15 @@ public class RedisStoreTest extends Assert {
     @Test
     public void save() throws IOException, ClassNotFoundException {
         String sessionId = sessionIdGenerator.generateSessionId();
-        System.out.println(sessionId);
         Session session = manager.createSession(sessionId);
         rs.save(session);
 
         Jedis j = new Jedis("localhost");
         j.connect();
-        //j.auth("foobared");
         Map<String, String> data = j.hgetAll(sessionId);
-        System.out.println(j.quit());
+        j.quit();
         j.disconnect();
-
+        
         assertNotNull(data);
         ObjectOutputStream oos = null;
         ByteArrayOutputStream bos = null;
