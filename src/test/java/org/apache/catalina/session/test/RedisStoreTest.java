@@ -49,15 +49,12 @@ public class RedisStoreTest extends Assert {
         j.disconnect();
         
         assertNotNull(data);
-        ObjectOutputStream oos = null;
-        ByteArrayOutputStream bos = null;
 
-        bos = new ByteArrayOutputStream();
-        oos = new ObjectOutputStream(new BufferedOutputStream(bos));
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(bos));
 
         ((StandardSession) session).writeObjectData(oos);
         oos.close();
-        oos = null;
         assertEquals(session.getId(), data.get("id"));
     }
 
