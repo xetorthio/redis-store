@@ -249,6 +249,9 @@ public class RedisStore extends StoreBase implements Store {
     private Jedis getJedis() throws IOException {
         Jedis jedis = null;
         if(usePool) {
+            if (log.isLoggable(Level.INFO)) {
+                log.info("Using pool");
+            }
             if(jedisPool == null) {
                 GenericObjectPool.Config config =  new GenericObjectPool.Config();
                 config.maxActive = RedisStore.maxActive;
@@ -272,6 +275,9 @@ public class RedisStore extends StoreBase implements Store {
             jedis = jedisPool.getResource();
 
         } else {
+            if (log.isLoggable(Level.INFO)) {
+                log.info("Using plain connection");
+            }
             jedis = new Jedis(getHost(), getPort());
             jedis.connect();
         }
