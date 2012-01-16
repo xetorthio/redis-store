@@ -26,3 +26,8 @@ dependencies {
 
   testCompile 'junit:junit:4.10'
 }
+
+task copyToLib(type: Copy) {
+  into "$buildDir/output/lib"
+  from configurations.runtime
+}
