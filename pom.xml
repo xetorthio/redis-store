@@ -3,26 +3,25 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.apache.catalina.session</groupId>
 	<artifactId>RedisStore</artifactId>
-	<version>1.0.0-RC3</version>
+	<version>1.0.0-RC4SnapShot</version>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
-			<type>jar</type>
-			<scope>compile</scope>
+			<version>4.10</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tomcat</groupId>
-			<artifactId>catalina</artifactId>
-			<version>6.0.26</version>
+			<artifactId>tomcat-catalina</artifactId>
+			<version>7.0.39</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>
-			<version>1.5.1</version>
+			<version>2.1.0</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
@@ -40,6 +39,11 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+		  <groupId>commons-logging</groupId>
+		  <artifactId>commons-logging</artifactId>
+		  <version>1.1.1</version>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -52,8 +56,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.0.2</version>
 				<configuration>
-					<source>1.5</source>
-					<target>1.5</target>
+					<source>1.6</source>
+					<target>1.6</target>
 				</configuration>
 			</plugin>
 		</plugins>

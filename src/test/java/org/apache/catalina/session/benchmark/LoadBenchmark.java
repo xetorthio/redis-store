@@ -11,10 +11,11 @@ import org.apache.catalina.session.PersistentManager;
 import org.apache.catalina.session.RedisStore;
 import org.apache.catalina.session.StandardSession;
 
+import org.apache.catalina.util.SessionIdGenerator;
 import redis.clients.jedis.Protocol;
 
 public class LoadBenchmark {
-    private static final int TOTAL_OPERATIONS = 1000;
+    private static  int TOTAL_OPERATIONS = 1000;
 
     /**
      * @param args
@@ -23,18 +24,21 @@ public class LoadBenchmark {
      */
     public static void main(String[] args) throws IOException,
             ClassNotFoundException {
+        SessionIdGenerator sessionIdGenerator = new SessionIdGenerator();
         Logger.getLogger("RedisStore").setLevel(Level.OFF);
-        RedisStore.setDatabase(0);
         RedisStore.setHost("localhost");
-        RedisStore.setPassword("foobared");
+        //RedisStore.setPassword("foobared");
         RedisStore.setPort(Protocol.DEFAULT_PORT);
+        RedisStore.setUsePool(true);
+        RedisStore.setMinIdle(20);
+        RedisStore.setMaxActive(20);
 
         PersistentManager manager = new PersistentManager();
         manager.setContainer(new StandardContext());
         RedisStore rs = new RedisStore();
         rs.setManager(manager);
 
-        Session session = manager.createSession(null);
+        Session session = manager.createSession(sessionIdGenerator.generateSessionId());
         ((StandardSession) session).setAttribute("info", new String(
                 new byte[30000]));
         rs.save(session);
@@ -43,7 +47,12 @@ public class LoadBenchmark {
 
         long begin = Calendar.getInstance().getTimeInMillis();
         for (int n = 0; n < TOTAL_OPERATIONS; n++) {
+            try {
             rs.load(id);
+            } catch(RuntimeException re) {
+                System.out.println("Broken in Operation: " + n);
+                throw re;
+            }
         }
         long ellapsed = Calendar.getInstance().getTimeInMillis() - begin;
 
