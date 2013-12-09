@@ -2,3 +2,11 @@
 .project
 .settings/
 target/
+.gradle
+.idea
+build
+*.iml
+*.ipr
+*.iws
+out/
+bin/

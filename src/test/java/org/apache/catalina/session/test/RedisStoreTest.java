@@ -11,6 +11,7 @@ import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.session.PersistentManager;
 import org.apache.catalina.session.RedisStore;
 import org.apache.catalina.session.StandardSession;
+import org.apache.catalina.util.SessionIdGenerator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,48 +22,45 @@ import redis.clients.jedis.Protocol;
 public class RedisStoreTest extends Assert {
     private PersistentManager manager;
     private RedisStore rs;
+    private SessionIdGenerator sessionIdGenerator;
 
     @Before
     public void startUp() {
-        RedisStore.setDatabase(0);
         RedisStore.setHost("localhost");
-        RedisStore.setPassword("foobared");
         RedisStore.setPort(Protocol.DEFAULT_PORT);
 
         manager = new PersistentManager();
         manager.setContainer(new StandardContext());
         rs = new RedisStore();
         rs.setManager(manager);
+        sessionIdGenerator = new SessionIdGenerator();
     }
 
     @Test
     public void save() throws IOException, ClassNotFoundException {
-        Session session = manager.createSession(null);
+        String sessionId = sessionIdGenerator.generateSessionId();
+        Session session = manager.createSession(sessionId);
         rs.save(session);
 
         Jedis j = new Jedis("localhost");
         j.connect();
-        j.auth("foobared");
-        Map<String, String> data = j.hgetAll(session.getId());
+        Map<String, String> data = j.hgetAll(sessionId);
         j.quit();
         j.disconnect();
 
         assertNotNull(data);
-        ObjectOutputStream oos = null;
-        ByteArrayOutputStream bos = null;
 
-        bos = new ByteArrayOutputStream();
-        oos = new ObjectOutputStream(new BufferedOutputStream(bos));
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(bos));
 
         ((StandardSession) session).writeObjectData(oos);
         oos.close();
-        oos = null;
         assertEquals(session.getId(), data.get("id"));
     }
 
     @Test
     public void load() throws IOException, ClassNotFoundException {
-        Session savedSession = manager.createSession(null);
+        Session savedSession = manager.createSession(sessionIdGenerator.generateSessionId());
         ((StandardSession) savedSession).setAttribute("foo", "bar");
         rs.save(savedSession);
 
