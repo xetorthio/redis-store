@@ -1,0 +1,33 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'project-report'
+
+sourceCompatibility = '1.6'
+targetCompatibility = '1.6'
+
+tomcatVersion = '7.0.23'
+
+version = '1.0.0-RC4-SNAPSHOT'
+group = 'org.apache.catalina.session'
+
+description = ''
+artefact = 'RedisStore'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile "org.apache.tomcat:tomcat-catalina:${tomcatVersion}"
+  compile 'redis.clients:jedis:2.0.0'
+  compile "org.apache.tomcat:tomcat-util:${tomcatVersion}"
+  compile "org.apache.tomcat:tomcat-coyote:${tomcatVersion}"
+
+  testCompile 'junit:junit:4.10'
+}
+
+task copyToLib(type: Copy) {
+  into "$buildDir/output/lib"
+  from configurations.runtime
+}

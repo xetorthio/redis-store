@@ -22,6 +22,22 @@ You can play with the values. This is just an example.
 
 Make sure that whatever you store in the session is Serializable.
 
+## How to add connection pooling capabilities?
+
+By default the connection pooling is disabled. You can improve the performance using the following:
+
+	<Manager className="org.apache.catalina.session.PersistentManager" saveOnRestart="true" maxActiveSessions="1" minIdleSwap="1" maxIdleSwap="1" maxIdleBackup="1">
+    	<Store className="org.apache.catalina.session.RedisStore"
+    		host="localhost"
+    		port="6379"
+    		password="something"
+    		database="0"
+    		usePool="true"
+    	/>
+    </Manager>
+
+If you want (and know how) tuning the connection pool, only set the according parameters and values according to the Jedis documentation (https://github.com/xetorthio/jedis/wiki/Getting-started)
+
 License
 -------
 
